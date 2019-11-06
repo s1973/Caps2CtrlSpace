@@ -9,11 +9,15 @@ using System.Windows.Forms;
 
 namespace Caps2CtrlSpace
 {
+
+
     public class KeyMapper
     {
         private const int WH_KEYBOARD_LL = 13;
 
         private const int WM_KEYDOWN = 0x0100;
+
+        private const int WM_KEYUP = 0x0101;
 
         private static LowLevelKeyboardProc _proc = HookCallback;
 
@@ -50,9 +54,19 @@ namespace Caps2CtrlSpace
 
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
+        public struct KeyboardHookStruct
+        {
+            public Int32 vkCode;  //定一个虚拟键码。该代码必须有一个价值的范围1至254
+            public Int32 scanCode; // 指定的硬件扫描码的关键
+            public Int32 flags;  // 键标志
+            public Int32 time; // 指定的时间戳记的这个讯息
+            public IntPtr dwExtraInfo; // 指定额外信息相关的信息
+        }
 
         private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
+            KeyboardHookStruct MyKeyboardHookStruct = (KeyboardHookStruct)Marshal.PtrToStructure(lParam, typeof(KeyboardHookStruct));
+
 
             if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
             {
@@ -60,7 +74,7 @@ namespace Caps2CtrlSpace
                 int vkCode = Marshal.ReadInt32(lParam);
                 if ((Keys)vkCode == Keys.Capital)
                 {
-                    SendKeys.Send("^ "); //将CapsLock转换为Ctrl+Space
+                    // SendKeys.Send("^ "); //将CapsLock转换为Ctrl+Space
                     return (IntPtr)1;
                 }
 
@@ -69,7 +83,6 @@ namespace Caps2CtrlSpace
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
 
         }
-
 
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -88,7 +101,6 @@ namespace Caps2CtrlSpace
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
-
 
         //[DllImport("user32.dll")]
         //static extern IntPtr GetForegroundWindow();
